@@ -151,6 +151,8 @@ def main():
     target_create_parser.add_argument("-r", "--refs", nargs="+", default=["refs/heads/deploy"])
     target_create_parser.add_argument("-t", "--timeout", type=float, default=None)
     target_create_parser.add_argument("args", nargs="+")
+    target_test_parser = target_command_parser.add_parser("test")
+    target_test_parser.add_argument("id")
 
     # Deployment tools
     deployment_parser = command_parser.add_parser("deployment")
@@ -195,6 +197,17 @@ def main():
                 timeout=args.timeout)
             db.session.add(target)
             db.session.commit()
+
+        elif args.target_command == "test":
+            target = Target.query.filter_by(id=args.id).first()
+            deployment = target.execute()
+            table = [(
+                str(deployment.start_time),
+                str(deployment.elapsed_time),
+                deployment.raised_exception,
+                deployment.timed_out,
+                deployment.status)]
+            print(tabulate(table, headers=["Time", "Elapsed", "Except", "Timeout", "Status"]))
 
     # Deployment tools
     elif args.command == "deployment":
