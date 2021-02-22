@@ -116,7 +116,7 @@ def hook(id: str) -> Response:
     if request.headers.get("X-GitHub-Event") not in target.events:
         return Response(status=204, mimetype="text/plain", response="ignoring event")
 
-    data = json.loads(request.body.decode())
+    data = json.loads(request.data)
     if data["ref"] not in target.refs:
         return Response(status=204, mimetype="text/plain", response="ignoring ref")
 
@@ -133,6 +133,8 @@ def main():
 
     parser = ArgumentParser()
     command_parser = parser.add_subparsers(dest="command")
+
+    run_parser = command_parser.add_parser("run")
 
     # Database tools
     database_parser = command_parser.add_parser("database")
@@ -162,6 +164,9 @@ def main():
     deployment_list_parser.add_argument("-t", "--target")
 
     args = parser.parse_args()
+
+    if args.command == "run":
+        app.run()
 
     # Migrate
     if args.command == "database":
