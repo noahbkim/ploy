@@ -108,17 +108,17 @@ def hook(id: str) -> Response:
     if target is None:
         return Response(status=404, mimetype="text/plain")
 
-    verification = hmac.new(target.key.encode(), request.body, hashlib.sha1).hexdigest()
+    verification = hmac.new(target.key.encode(), request.data, hashlib.sha1).hexdigest()
     offered_verification = request.headers.get("X-Hub-Signature")[len("sha1="):]
     if not hmac.compare_digest(offered_verification, verification):
         return Response(status=404, mimetype="text/plain")
 
-    if request.headers.get("X-GitHub-Event") != target.events:
-        return Response(status=204, mimetype="text/plain")
+    if request.headers.get("X-GitHub-Event") not in target.events:
+        return Response(status=204, mimetype="text/plain", response="ignoring event")
 
     data = json.loads(request.body.decode())
     if data["ref"] not in target.refs:
-        return Response(status=204, mimetype="text/plain")
+        return Response(status=204, mimetype="text/plain", response="ignoring ref")
 
     deployment = target.execute()
     db.session.add(deployment)
